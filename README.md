@@ -1,12 +1,10 @@
 # Item Splitter 🪓
-
 A lightweight Fabric mod for Minecraft 1.21.11 that lets you split item stacks into smaller amounts using configurable keybinds.
 
 ## Features
 - Split item stacks with a single keypress
 - Fully configurable keybinds with custom amounts
 - Works in both inventory and containers (chests, barrels, etc.)
-- In-game HUD showing your active keybinds
 - Config saves automatically
 
 ## How to Use
@@ -15,10 +13,6 @@ A lightweight Fabric mod for Minecraft 1.21.11 that lets you split item stacks i
 3. Enter the amount you want to split by
 4. Click **Add**
 5. Hover over any item stack in a container or inventory and press your key!
-
-## HUD
-- A small overlay appears next to any open container showing your keybinds
-- Use **Numpad +** and **Numpad -** to scroll through pages if you have many binds
 
 ## Requirements
 - Minecraft 1.21.11
