@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "item-splitter",
+	"version": "${version}",
+	"name": "Item Splitter",
+	"description": "Split item stacks into smaller amounts with configurable keybinds.",
+	"authors": [
+		"therealdp"
+	],
+	"contact": {
+		"sources": "https://github.com/mr11robot/item-splitter"
+	},
+	"license": "MIT",
+	"icon": "assets/item-splitter/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.therealdp.itemsplitter.ItemSplitter"
+		],
+		"client": [
+			"com.therealdp.itemsplitter.ItemSplitterClient"
+		]
+	},
+	"mixins": [
+		"item-splitter.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
