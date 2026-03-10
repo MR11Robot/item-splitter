@@ -14,6 +14,7 @@ public class SplitterHandler {
     public static void handleSplitByKey(int keyCode) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
+        if (client.interactionManager == null) return;
 
         SplitterConfig.SplitBind bind = null;
         for (SplitterConfig.SplitBind b : SplitterConfig.get().binds) {
@@ -45,7 +46,11 @@ public class SplitterHandler {
             if (remaining <= amount) break;
             if (slot == hoveredSlot) continue;
             if (!slot.getStack().isEmpty()) continue;
+            // skip slots that cannot accept this item type (e.g. crafting output, armor slots)
+            if (!slot.canInsert(stack)) continue;
+            if (!slot.isEnabled()) continue;
 
+            // only split within the same inventory region (container <-> container, player <-> player)
             boolean slotInContainer = !(slot.inventory instanceof PlayerInventory);
             if (slotInContainer != inContainer) continue;
 
