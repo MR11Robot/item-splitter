@@ -27,10 +27,10 @@ public class ItemSplitterClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (configKey.consumeClick() && client.player != null) {
-                client.gui.setScreen(new ConfigScreen());
+                client.setScreen(new ConfigScreen());
             }
 
-            if (client.player != null && client.gui.screen() instanceof AbstractContainerScreen<?>) {
+            if (client.player != null && client.screen instanceof AbstractContainerScreen<?>) {
                 for (SplitterConfig.SplitBind bind : SplitterConfig.get().binds) {
                     int keyCode = bind.keyCode;
                     boolean isDown = InputConstants.isKeyDown(client.getWindow(), keyCode);

@@ -1,5 +1,5 @@
 # Item Splitter 🪓
-A lightweight Fabric mod for Minecraft 26.2 that lets you split item stacks into smaller amounts using configurable keybinds.
+A lightweight Fabric mod for Minecraft 26.1.2 that lets you split item stacks into smaller amounts using configurable keybinds.
 
 ## Features
 - Split item stacks with a single keypress
@@ -15,9 +15,9 @@ A lightweight Fabric mod for Minecraft 26.2 that lets you split item stacks into
 5. Hover over any item stack in a container or inventory and press your key!
 
 ## Requirements
-- Minecraft 26.2
+- Minecraft 26.1.2
 - Fabric Loader 0.20.1+
-- Fabric API 0.161.0+26.2
+- Fabric API 0.155.3+26.1.2
 - Java 25+
 
 ## Installation

@@ -27,7 +27,7 @@ public class SplitterHandler {
         if (bind == null) return;
         int amount = bind.amount;
 
-        if (!(client.gui.screen() instanceof AbstractContainerScreen<?> handledScreen)) return;
+        if (!(client.screen instanceof AbstractContainerScreen<?> handledScreen)) return;
 
         Slot hoveredSlot = ((HandledScreenMixin) handledScreen).getFocusedSlot();
         if (hoveredSlot == null || !hoveredSlot.hasItem()) return;
