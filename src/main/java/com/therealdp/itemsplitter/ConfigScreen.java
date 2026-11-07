@@ -1,18 +1,18 @@
 package com.therealdp.itemsplitter;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
+import com.mojang.blaze3d.platform.InputConstants;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
 
 public class ConfigScreen extends Screen {
 
-    private TextFieldWidget amountField;
+    private EditBox amountField;
     private boolean listeningForKey = false;
     private String listeningKeyDisplay = "";
     private int pendingKeyCode = -1;
@@ -27,7 +27,7 @@ public class ConfigScreen extends Screen {
     private static final int GAP = 5;
 
     public ConfigScreen() {
-        super(Text.literal("Item Splitter Config"));
+        super(Component.literal("Item Splitter Config"));
     }
 
     @Override
@@ -45,30 +45,30 @@ public class ConfigScreen extends Screen {
                 ? "§eListening..."
                 : (listeningKeyDisplay.isEmpty() ? "[ Set Key ]" : "§b" + listeningKeyDisplay);
 
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.literal(keyBtnText),
+        this.addRenderableWidget(Button.builder(
+                Component.literal(keyBtnText),
                 button -> {
                     listeningForKey = true;
                     listeningKeyDisplay = "";
                     pendingKeyCode = -1;
-                    this.clearChildren();
+                    this.clearWidgets();
                     this.init();
                 }
-        ).dimensions(rowStartX, controlsY, KEY_BTN_WIDTH, BTN_HEIGHT).build());
+        ).bounds(rowStartX, controlsY, KEY_BTN_WIDTH, BTN_HEIGHT).build());
 
-        amountField = new TextFieldWidget(
-                this.textRenderer,
+        amountField = new EditBox(
+                this.font,
                 rowStartX + KEY_BTN_WIDTH + GAP, controlsY,
                 AMOUNT_WIDTH, BTN_HEIGHT,
-                Text.literal("Amt")
+                Component.literal("Amt")
         );
-        amountField.setPlaceholder(Text.literal("Amt"));
-        this.addDrawableChild(amountField);
+        amountField.setHint(Component.literal("Amt"));
+        this.addRenderableWidget(amountField);
 
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("§aAdd"),
+        this.addRenderableWidget(Button.builder(
+                Component.literal("§aAdd"),
                 button -> addBind()
-        ).dimensions(rowStartX + KEY_BTN_WIDTH + GAP + AMOUNT_WIDTH + GAP, controlsY, DELETE_WIDTH + 20, BTN_HEIGHT).build());
+        ).bounds(rowStartX + KEY_BTN_WIDTH + GAP + AMOUNT_WIDTH + GAP, controlsY, DELETE_WIDTH + 20, BTN_HEIGHT).build());
 
         renderBindButtons(rowStartX, bindsStartY);
 
@@ -76,24 +76,24 @@ public class ConfigScreen extends Screen {
         int totalPages = (int) Math.ceil((double) binds.size() / BINDS_PER_PAGE);
         if (totalPages > 1) {
             int pageY = this.height - 28;
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("< Prev"),
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("< Prev"),
                     button -> {
-                        if (currentPage > 0) { currentPage--; this.clearChildren(); this.init(); }
+                        if (currentPage > 0) { currentPage--; this.clearWidgets(); this.init(); }
                     }
-            ).dimensions(centerX - 65, pageY, 55, BTN_HEIGHT).build());
+            ).bounds(centerX - 65, pageY, 55, BTN_HEIGHT).build());
 
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Next >"),
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("Next >"),
                     button -> {
-                        if (currentPage < totalPages - 1) { currentPage++; this.clearChildren(); this.init(); }
+                        if (currentPage < totalPages - 1) { currentPage++; this.clearWidgets(); this.init(); }
                     }
-            ).dimensions(centerX + 10, pageY, 55, BTN_HEIGHT).build());
+            ).bounds(centerX + 10, pageY, 55, BTN_HEIGHT).build());
         }
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (listeningForKey) {
             if (input.isEscape()) {
                 listeningForKey = false;
@@ -101,14 +101,14 @@ public class ConfigScreen extends Screen {
                 pendingKeyCode = -1;
             } else {
                 pendingKeyCode = input.key();
-                String raw = InputUtil.fromKeyCode(input).getTranslationKey()
+                String raw = InputConstants.getKey(input).getName()
                         .replace("key.keyboard.", "")
                         .replace("keypad.", "Numpad ")
                         .replace(".", " ");
                 listeningKeyDisplay = raw.substring(0, 1).toUpperCase() + raw.substring(1);
                 listeningForKey = false;
             }
-            this.clearChildren();
+            this.clearWidgets();
             this.init();
             return true;
         }
@@ -116,13 +116,13 @@ public class ConfigScreen extends Screen {
     }
 
     private String getConflictingBind(int keyCode) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.options == null) return null;
-        for (net.minecraft.client.option.KeyBinding binding : client.options.allKeys) {
-            if (binding.getDefaultKey().getCode() == keyCode ||
-                    binding.getBoundKeyTranslationKey().equals(
-                            InputUtil.Type.KEYSYM.createFromCode(keyCode).getTranslationKey())) {
-                return binding.getBoundKeyLocalizedText().getString();
+        for (net.minecraft.client.KeyMapping binding : client.options.keyMappings) {
+            if (binding.getDefaultKey().getValue() == keyCode ||
+                    binding.saveString().equals(
+                            InputConstants.Type.KEYBOARD.getOrCreate(keyCode).getName())) {
+                return binding.getTranslatedKeyMessage().getString();
             }
         }
         return null;
@@ -130,7 +130,7 @@ public class ConfigScreen extends Screen {
 
     private void addBind() {
         try {
-            int amount = Integer.parseInt(amountField.getText().trim());
+            int amount = Integer.parseInt(amountField.getValue().trim());
             if (amount <= 0 || pendingKeyCode == -1) return;
 
             String conflict = getConflictingBind(pendingKeyCode);
@@ -138,7 +138,7 @@ public class ConfigScreen extends Screen {
                 hasConflict = true;
                 listeningKeyDisplay = "§c✗ " + conflict;
                 SplitterSound.playFail();
-                this.clearChildren();
+                this.clearWidgets();
                 this.init();
                 return;
             }
@@ -153,7 +153,7 @@ public class ConfigScreen extends Screen {
             int totalPages = (int) Math.ceil((double) SplitterConfig.get().binds.size() / BINDS_PER_PAGE);
             currentPage = Math.max(0, totalPages - 1);
 
-            this.clearChildren();
+            this.clearWidgets();
             this.init();
         } catch (NumberFormatException e) {
             // ignore
@@ -171,61 +171,59 @@ public class ConfigScreen extends Screen {
             int row = i - start;
             int rowY = startY + (row * ROW_HEIGHT);
 
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("§b" + bind.keyDisplay),
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("§b" + bind.keyDisplay),
                     button -> {}
-            ).dimensions(startX, rowY, KEY_BTN_WIDTH, BTN_HEIGHT).build());
+            ).bounds(startX, rowY, KEY_BTN_WIDTH, BTN_HEIGHT).build());
 
-            TextFieldWidget editField = new TextFieldWidget(
-                    this.textRenderer,
+            EditBox editField = new EditBox(
+                    this.font,
                     startX + KEY_BTN_WIDTH + GAP, rowY,
                     AMOUNT_WIDTH, BTN_HEIGHT,
-                    Text.literal("" + bind.amount)
+                    Component.literal("" + bind.amount)
             );
-            editField.setText("" + bind.amount);
-            editField.setChangedListener(text -> {
+            editField.setValue("" + bind.amount);
+            editField.setResponder(text -> {
                 try {
                     int newAmount = Integer.parseInt(text.trim());
                     if (newAmount > 0) { bind.amount = newAmount; SplitterConfig.save(); }
                 } catch (NumberFormatException ignored) {}
             });
-            this.addDrawableChild(editField);
+            this.addRenderableWidget(editField);
 
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("§cX"),
+            this.addRenderableWidget(Button.builder(
+                    Component.literal("§cX"),
                     button -> {
                         SplitterConfig.get().binds.remove(index);
                         SplitterConfig.save();
                         if (currentPage > 0 && currentPage * BINDS_PER_PAGE >= SplitterConfig.get().binds.size()) {
                             currentPage--;
                         }
-                        this.clearChildren();
+                        this.clearWidgets();
                         this.init();
                     }
-            ).dimensions(startX + KEY_BTN_WIDTH + GAP + AMOUNT_WIDTH + GAP, rowY, DELETE_WIDTH, BTN_HEIGHT).build());
+            ).bounds(startX + KEY_BTN_WIDTH + GAP + AMOUNT_WIDTH + GAP, rowY, DELETE_WIDTH, BTN_HEIGHT).build());
         }
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderInGameBackground(context);
-
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         int centerX = this.width / 2;
 
         // status message
         if (hasConflict) {
-            context.drawCenteredTextWithShadow(this.textRenderer,
-                    Text.literal("§c⚠ Key already used by: " + listeningKeyDisplay.replace("§c✗ ", "")),
+            context.centeredText(this.font,
+                    Component.literal("§c⚠ Key already used by: " + listeningKeyDisplay.replace("§c✗ ", "")),
                     centerX, this.height - 65, 0xFFFFFF);
         } else if (pendingKeyCode != -1 && !listeningForKey) {
-            context.drawCenteredTextWithShadow(this.textRenderer,
-                    Text.literal("§a✔ Key set! Enter amount and press Add"),
+            context.centeredText(this.font,
+                    Component.literal("§a✔ Key set! Enter amount and press Add"),
                     centerX, this.height - 65, 0xFFFFFF);
         } else {
-            context.drawCenteredTextWithShadow(this.textRenderer,
-                    Text.literal("§7Press §eSet Key §7then enter amount"),
+            context.centeredText(this.font,
+                    Component.literal("§7Press §eSet Key §7then enter amount"),
                     centerX, this.height - 65, 0xFFFFFF);
         }
 
@@ -233,14 +231,14 @@ public class ConfigScreen extends Screen {
         List<SplitterConfig.SplitBind> binds = SplitterConfig.get().binds;
         int totalPages = (int) Math.ceil((double) binds.size() / BINDS_PER_PAGE);
         if (totalPages > 1) {
-            context.drawCenteredTextWithShadow(this.textRenderer,
-                    Text.literal("§7" + (currentPage + 1) + " / " + totalPages),
+            context.centeredText(this.font,
+                    Component.literal("§7" + (currentPage + 1) + " / " + totalPages),
                     centerX, this.height - 50, 0xFFFFFF);
         }
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 }

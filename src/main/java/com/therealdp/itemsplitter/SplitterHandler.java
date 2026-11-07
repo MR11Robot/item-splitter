@@ -1,20 +1,20 @@
 package com.therealdp.itemsplitter;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.slot.SlotActionType;
 import com.therealdp.itemsplitter.mixin.HandledScreenMixin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class SplitterHandler {
 
     public static void handleSplitByKey(int keyCode) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
-        if (client.interactionManager == null) return;
+        if (client.gameMode == null) return;
 
         SplitterConfig.SplitBind bind = null;
         for (SplitterConfig.SplitBind b : SplitterConfig.get().binds) {
@@ -27,16 +27,16 @@ public class SplitterHandler {
         if (bind == null) return;
         int amount = bind.amount;
 
-        if (!(client.currentScreen instanceof HandledScreen<?> handledScreen)) return;
+        if (!(client.gui.screen() instanceof AbstractContainerScreen<?> handledScreen)) return;
 
         Slot hoveredSlot = ((HandledScreenMixin) handledScreen).getFocusedSlot();
-        if (hoveredSlot == null || !hoveredSlot.hasStack()) return;
+        if (hoveredSlot == null || !hoveredSlot.hasItem()) return;
 
-        ItemStack stack = hoveredSlot.getStack();
+        ItemStack stack = hoveredSlot.getItem();
         if (stack.getCount() <= amount) return;
 
-        ScreenHandler handler = client.player.currentScreenHandler;
-        boolean inContainer = !(hoveredSlot.inventory instanceof PlayerInventory);
+        AbstractContainerMenu handler = client.player.containerMenu;
+        boolean inContainer = !(hoveredSlot.container instanceof Inventory);
         int sourceSlotIndex = handler.slots.indexOf(hoveredSlot);
         if (sourceSlotIndex == -1) return;
 
@@ -45,25 +45,25 @@ public class SplitterHandler {
         for (Slot slot : handler.slots) {
             if (remaining <= amount) break;
             if (slot == hoveredSlot) continue;
-            if (!slot.getStack().isEmpty()) continue;
+            if (!slot.getItem().isEmpty()) continue;
             // skip slots that cannot accept this item type (e.g. crafting output, armor slots)
-            if (!slot.canInsert(stack)) continue;
-            if (!slot.isEnabled()) continue;
+            if (!slot.mayPlace(stack)) continue;
+            if (!slot.isActive()) continue;
 
             // only split within the same inventory region (container <-> container, player <-> player)
-            boolean slotInContainer = !(slot.inventory instanceof PlayerInventory);
+            boolean slotInContainer = !(slot.container instanceof Inventory);
             if (slotInContainer != inContainer) continue;
 
             int targetSlotIndex = handler.slots.indexOf(slot);
             if (targetSlotIndex == -1) continue;
 
-            client.interactionManager.clickSlot(handler.syncId, sourceSlotIndex, 0, SlotActionType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(handler.containerId, sourceSlotIndex, 0, ContainerInput.PICKUP, client.player);
 
             for (int i = 0; i < amount; i++) {
-                client.interactionManager.clickSlot(handler.syncId, targetSlotIndex, 1, SlotActionType.PICKUP, client.player);
+                client.gameMode.handleContainerInput(handler.containerId, targetSlotIndex, 1, ContainerInput.PICKUP, client.player);
             }
 
-            client.interactionManager.clickSlot(handler.syncId, sourceSlotIndex, 0, SlotActionType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(handler.containerId, sourceSlotIndex, 0, ContainerInput.PICKUP, client.player);
 
             remaining -= amount;
         }
