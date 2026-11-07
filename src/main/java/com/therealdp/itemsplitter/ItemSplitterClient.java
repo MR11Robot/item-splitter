@@ -20,7 +20,7 @@ public class ItemSplitterClient implements ClientModInitializer {
 
         configKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.itemsplitter.config",
-                InputConstants.Type.KEYBOARD,
+                InputConstants.Type.KEYSYM,
                 InputConstants.KEY_K,
                 KeyMapping.Category.MISC
         ));
@@ -33,7 +33,7 @@ public class ItemSplitterClient implements ClientModInitializer {
             if (client.player != null && client.gui.screen() instanceof AbstractContainerScreen<?>) {
                 for (SplitterConfig.SplitBind bind : SplitterConfig.get().binds) {
                     int keyCode = bind.keyCode;
-                    boolean isDown = InputConstants.isKeyDown(keyCode);
+                    boolean isDown = InputConstants.isKeyDown(client.getWindow(), keyCode);
                     boolean wasDown = keyWasDown.getOrDefault(keyCode, false);
                     if (isDown && !wasDown) {
                         SplitterHandler.handleSplitByKey(keyCode);

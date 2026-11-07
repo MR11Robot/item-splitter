@@ -121,7 +121,7 @@ public class ConfigScreen extends Screen {
         for (net.minecraft.client.KeyMapping binding : client.options.keyMappings) {
             if (binding.getDefaultKey().getValue() == keyCode ||
                     binding.saveString().equals(
-                            InputConstants.Type.KEYBOARD.getOrCreate(keyCode).getName())) {
+                            InputConstants.Type.KEYSYM.getOrCreate(keyCode).getName())) {
                 return binding.getTranslatedKeyMessage().getString();
             }
         }
